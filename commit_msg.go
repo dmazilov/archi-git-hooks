@@ -97,7 +97,7 @@ func main() {
 
 	modifiedDiagrams := modifiedDiagramsCollection()
 	if len(modifiedDiagrams) > 0 {
-		commitMsgLines = append(commitMsgLines, "\n\nThese Archimate diagrams were changed in current commit:\n")
+		commitMsgLines = append(commitMsgLines, "\nFollowing Archimate diagrams were changed in current commit:\n")
 		commitMsgLines = append(commitMsgLines, modifiedDiagrams...)
 	}
 
