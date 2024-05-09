@@ -24,7 +24,7 @@ func modifiedDiagramsCollection() []string {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		fmt.Println("Command "+strings.Join(cmd.Args, " ")+" returned error: ", err)
+		fmt.Println(fmt.Sprintf("Command %s returned error: ", strings.Join(cmd.Args, " ")), err)
 		if stderr.Len() > 0 {
 			fmt.Println("Error message:", stderr.String())
 		}
@@ -40,20 +40,25 @@ func modifiedDiagramsCollection() []string {
 		filename := scanner.Text()
 		matches := diagramFilenamePattern.FindStringSubmatch(filename)
 		if len(matches) > 1 {
+			var diagramString string
 			diagramNumber++
 			diagramXmlContent, err := os.ReadFile(filename)
 			if err != nil {
-				fmt.Println("Couldn't read file: ", filename, err)
-				os.Exit(1)
+				if os.IsNotExist(err) {
+					diagramString = fmt.Sprintf("%d) DELETED diagram [ %s ]", diagramNumber, filename)
+				} else {
+					fmt.Println("Couldn't read file: ", filename, err)
+					os.Exit(1)
+				}
+			} else {
+				var diagram ArchimateDiagramModel
+				err = xml.Unmarshal(diagramXmlContent, &diagram)
+				if err != nil {
+					fmt.Println("Couldn't parse diagram xml: ", filename, err)
+					os.Exit(1)
+				}
+				diagramString = fmt.Sprintf("%d) %s [ %s ]", diagramNumber, diagram.Name, diagram.Id)
 			}
-
-			var diagram ArchimateDiagramModel
-			err = xml.Unmarshal(diagramXmlContent, &diagram)
-			if err != nil {
-				fmt.Println("Couldn't parse diagram xml: ", filename, err)
-				os.Exit(1)
-			}
-			diagramString := fmt.Sprintf("%d) %s [ %s ]", diagramNumber, diagram.Name, diagram.Id)
 			modifiedDiagrams = append(modifiedDiagrams, diagramString)
 		}
 	}
@@ -68,7 +73,7 @@ func modifiedDiagramsCollection() []string {
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Println("There is no commit message file path")
+		fmt.Println("Commit message file couldn't be found")
 		os.Exit(1)
 	}
 
